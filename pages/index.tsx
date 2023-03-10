@@ -5,9 +5,8 @@ import { Space_Grotesk } from "next/font/google";
 import classNames from "classnames";
 import BackgroundGradient from "../components/background-gradient";
 import Card from "../components/card";
-import { useCallback, useRef, useState } from "react";
+import { MouseEvent, useCallback, useRef, useState } from "react";
 import client from "../config-client";
-import { MESSAGE_DONE_SYMBOL } from "../constants";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -19,44 +18,44 @@ const Home: NextPage = () => {
   const [result, setResult] = useState<string | undefined>(undefined);
   const [receiving, setReceiving] = useState(false);
 
-  // Store result fragments for that event handler be able to read latest.
-  const resultRef = useRef<string>();
-
-  const appendResult = useCallback((chunk: string) => {
-    let nextResult = (resultRef.current ?? "") + chunk;
-
-    resultRef.current = nextResult;
-
-    setResult(nextResult);
-  }, []);
-
-  const clearResult = useCallback(() => {
-    resultRef.current = "";
+  const start = useCallback(async () => {
     setResult("");
-  }, []);
-
-  const start = useCallback(() => {
-    clearResult();
     setReceiving(true);
 
-    let eventSource = new EventSource(
-      `/api/request?input=${encodeURIComponent(
-        input ? input : client.exampleInput
-      )}`
-    );
-    eventSource.onerror = () => {
-      setReceiving(false);
-      eventSource.close();
-    };
-    eventSource.onmessage = (event) => {
-      if (event.data === MESSAGE_DONE_SYMBOL) {
-        eventSource.close();
-        setReceiving(false);
-        return;
-      }
+    const response = await fetch("/api/request", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        input: input ? input : client.exampleInput,
+      }),
+    });
 
-      appendResult(event.data);
-    };
+    if (!response.ok) {
+      setReceiving(false);
+      return;
+    }
+
+    const data = response.body;
+
+    if (!data) {
+      return;
+    }
+
+    const reader = data.getReader();
+    const decoder = new TextDecoder();
+
+    let done = false;
+
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      const chunkValue = decoder.decode(value);
+      setResult((prev) => prev + chunkValue);
+    }
+
+    setReceiving(false);
   }, [input]);
 
   return (
@@ -128,14 +127,14 @@ const Home: NextPage = () => {
         ) : undefined}
       </main>
 
-      <footer className="flex h-24 w-full items-center justify-center opacity-50">
+      <footer className="flex h-24 w-full items-center justify-center">
         <a
           className="flex items-center justify-center gap-2"
           href="https://github.com/noobnooc/ohmygpt"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Powered by{" "}
+          <span className="opacity-50">Powered by</span>{" "}
           <span
             className={classNames(spaceGrotesk.className)}
             style={{ color: client.appThemeColor }}

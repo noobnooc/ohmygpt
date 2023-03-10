@@ -1,23 +1,20 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import type { NextApiRequest, NextApiResponse } from "next";
 import server from "../../config-server";
-import { OpenAIClient, OpenAI } from "@fern-api/openai";
-import { MESSAGE_DONE_SYMBOL } from "../../constants";
+import { NextRequest } from "next/server";
+import { OpenAI, CreateChatCompletionRequest } from "openai-streams";
+import { OpenAIStream } from "../../helpers/openai-stream";
 
-type Data = {
-  error: string;
+export const config = {
+  runtime: "edge",
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
-) {
-  let messageContent = req.query.input;
+export default async function handler(req: NextRequest) {
+  const requestBody = await req.json();
+
+  let messageContent: string = requestBody.input;
 
   if (typeof messageContent !== "string" || !messageContent) {
-    return res.status(404).json({
-      error: "invalid request",
-    });
+    return new Response(null, { status: 404 });
   }
 
   if (server.messageTemplate) {
@@ -31,51 +28,25 @@ export default async function handler(
     }
   }
 
-  let systemMessage: OpenAI.ChatCompletionRequestMessage | undefined =
-    server.systemMessage
-      ? {
-          role: "system",
-          content: server.systemMessage,
-        }
-      : undefined;
-  let userMessage: OpenAI.ChatCompletionRequestMessage = {
+  let systemMessage:
+    | CreateChatCompletionRequest["messages"][number]
+    | undefined = server.systemMessage
+    ? {
+        role: "system",
+        content: server.systemMessage,
+      }
+    : undefined;
+  let userMessage: CreateChatCompletionRequest["messages"][number] = {
     role: "user",
     content: messageContent,
   };
 
-  const headers = {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-    // To avoid to block the SSE stream
-    "Content-Encoding": "none",
+  const payload = {
+    model: "gpt-3.5-turbo",
+    messages: systemMessage ? [systemMessage, userMessage] : [userMessage],
+    stream: true,
   };
 
-  res.writeHead(200, headers);
-
-  const client = new OpenAIClient({
-    token: server.openAIAPIKey,
-  });
-
-  client.chat.createCompletion(
-    {
-      model: "gpt-3.5-turbo",
-      messages: systemMessage ? [systemMessage, userMessage] : [userMessage],
-      stream: true,
-    },
-    (data) => {
-      let content = data.choices[0]?.delta.content;
-      if (content) {
-        res.write(`data: ${content}\n\n`);
-      }
-    },
-    {
-      onError(err) {
-        res.write(`data: ${MESSAGE_DONE_SYMBOL}\n\n`);
-      },
-      onFinish() {
-        res.write(`data: ${MESSAGE_DONE_SYMBOL}\n\n`);
-      },
-    }
-  );
+  const stream = await OpenAIStream(payload);
+  return new Response(stream);
 }
