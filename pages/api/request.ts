@@ -1,7 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import server from "../../config-server";
 import { NextRequest } from "next/server";
-import { OpenAI, CreateChatCompletionRequest } from "openai-streams";
 import { OpenAIStream } from "../../helpers/openai-stream";
 
 export const config = {
@@ -28,15 +27,13 @@ export default async function handler(req: NextRequest) {
     }
   }
 
-  let systemMessage:
-    | CreateChatCompletionRequest["messages"][number]
-    | undefined = server.systemMessage
+  let systemMessage = server.systemMessage
     ? {
         role: "system",
         content: server.systemMessage,
       }
     : undefined;
-  let userMessage: CreateChatCompletionRequest["messages"][number] = {
+  let userMessage = {
     role: "user",
     content: messageContent,
   };
