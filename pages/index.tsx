@@ -1,86 +1,151 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
+import type { NextPage } from "next";
+import Head from "next/head";
+import Image from "next/image";
+import { Space_Grotesk } from "next/font/google";
+import classNames from "classnames";
+import BackgroundGradient from "../components/background-gradient";
+import Card from "../components/card";
+import { useCallback, useRef, useState } from "react";
+import client from "../config-client";
+import { MESSAGE_DONE_SYMBOL } from "../constants";
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+});
 
 const Home: NextPage = () => {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center py-2">
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+  const [input, setInput] = useState("");
+  const [result, setResult] = useState<string | undefined>(undefined);
+  const [receiving, setReceiving] = useState(false);
 
-      <main className="flex w-full flex-1 flex-col items-center justify-center px-20 text-center">
-        <h1 className="text-6xl font-bold">
-          Welcome to{' '}
-          <a className="text-blue-600" href="https://nextjs.org">
-            Next.js!
-          </a>
+  // Store result fragments for that event handler be able to read latest.
+  const resultRef = useRef<string>();
+
+  const appendResult = useCallback((chunk: string) => {
+    let nextResult = (resultRef.current ?? "") + chunk;
+
+    resultRef.current = nextResult;
+
+    setResult(nextResult);
+  }, []);
+
+  const clearResult = useCallback(() => {
+    resultRef.current = "";
+    setResult("");
+  }, []);
+
+  const start = useCallback(() => {
+    clearResult();
+    setReceiving(true);
+
+    let eventSource = new EventSource(
+      `/api/request?input=${encodeURIComponent(
+        input ? input : client.exampleInput
+      )}`
+    );
+    eventSource.onerror = () => {
+      setReceiving(false);
+      eventSource.close();
+    };
+    eventSource.onmessage = (event) => {
+      if (event.data === MESSAGE_DONE_SYMBOL) {
+        eventSource.close();
+        setReceiving(false);
+        return;
+      }
+
+      appendResult(event.data);
+    };
+  }, [input]);
+
+  return (
+    <div className="relative flex min-h-screen overflow-hidden isolate flex-col items-center justify-start py-2 bg-gray-100 text-black dark:bg-neutral-900 dark:text-gray-100">
+      <Head>
+        <title>{client.appName}</title>
+        <link rel="icon" href={client.appLogo} />
+      </Head>
+      <BackgroundGradient className="top-0 left-0 h-96 w-48 bg-indigo-500/30 duration-500 dark:bg-blue-500/40" />
+      <BackgroundGradient className="left-60 top-96 h-64 w-72 rounded-lg bg-blue-500/30  duration-700 dark:bg-indigo-500/40" />
+      <BackgroundGradient className="right-96 bottom-60 h-60 w-60 rounded-lg bg-red-500/30 dark:bg-violet-500/30" />
+      <BackgroundGradient className="right-0 bottom-0 h-48 w-96 rounded-full bg-orange-500/30 dark:bg-cyan-500/30" />
+
+      <main className="flex w-full flex-1 flex-col items-center px-20 text-center">
+        {client.appLogo ? (
+          <img className="w-20 mt-20 h-20 rounded-2xl" src={client.appLogo} />
+        ) : undefined}
+        <h1
+          className={classNames(
+            "text-6xl font-bold",
+            client.appLogo ? "mt-10" : "mt-48"
+          )}
+        >
+          <span
+            className="text-blue-600"
+            style={{
+              color: client.appThemeColor,
+            }}
+          >
+            {client.appName}
+          </span>
         </h1>
 
-        <p className="mt-3 text-2xl">
-          Get started by editing{' '}
-          <code className="rounded-md bg-gray-100 p-3 font-mono text-lg">
-            pages/index.tsx
-          </code>
-        </p>
+        <p className="mt-3 max-w-lg opacity-70">{client.appSummary}</p>
 
-        <div className="mt-6 flex max-w-4xl flex-wrap items-center justify-around sm:w-full">
-          <a
-            href="https://nextjs.org/docs"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Documentation &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Find in-depth information about Next.js features and its API.
-            </p>
-          </a>
+        <Card className="p-0 overflow-hidden mt-10 w-full h-36 max-w-lg bg-blue-100/20">
+          <textarea
+            className="bg-transparent w-full h-full outline-none p-4 resize-none"
+            placeholder={client.exampleInput}
+            autoFocus
+            value={input}
+            onChange={(event) => {
+              setInput(event.currentTarget.value);
+            }}
+          />
+        </Card>
 
-          <a
-            href="https://nextjs.org/learn"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Learn &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Learn about Next.js in an interactive course with quizzes!
-            </p>
-          </a>
+        <button
+          className={classNames(
+            spaceGrotesk.className,
+            "text-white rounded-xl px-5 py-2 m-5 text-xl font-bold hover:opacity-70 transition-all duration-300 disabled:opacity-50"
+          )}
+          style={{ background: client.appThemeColor }}
+          disabled={receiving}
+          onClick={start}
+        >
+          Start
+        </button>
 
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
+        {result !== undefined ? (
+          <Card
+            className="overflow-hidden break-words text-start w-full p-4 max-w-lg bg-blue-100/20"
+            style={{
+              minHeight: "9rem",
+            }}
           >
-            <h3 className="text-2xl font-bold">Examples &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Discover and deploy boilerplate example Next.js projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Deploy &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
+            {result}
+          </Card>
+        ) : undefined}
       </main>
 
-      <footer className="flex h-24 w-full items-center justify-center border-t">
+      <footer className="flex h-24 w-full items-center justify-center opacity-50">
         <a
           className="flex items-center justify-center gap-2"
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
+          href="https://github.com/noobnooc/ohmygpt"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Powered by{' '}
-          <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
+          Powered by{" "}
+          <span
+            className={classNames(spaceGrotesk.className)}
+            style={{ color: client.appThemeColor }}
+          >
+            OhMyGPT
+          </span>
         </a>
       </footer>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

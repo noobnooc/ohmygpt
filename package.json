@@ -6,7 +6,10 @@
     "start": "next start"
   },
   "dependencies": {
+    "@fern-api/openai": "^0.0.23",
+    "classnames": "^2.3.2",
     "next": "latest",
+    "openai": "^3.2.1",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },
