@@ -69,13 +69,13 @@ const Home: NextPage = () => {
       <BackgroundGradient className="right-96 bottom-60 h-60 w-60 rounded-lg bg-red-500/30 dark:bg-violet-500/30" />
       <BackgroundGradient className="right-0 bottom-0 h-48 w-96 rounded-full bg-orange-500/30 dark:bg-cyan-500/30" />
 
-      <main className="flex w-full flex-1 flex-col items-center px-20 text-center">
+      <main className="flex w-full flex-1 flex-col items-center p-5 text-center">
         {client.appLogo ? (
           <img className="w-20 mt-20 h-20 rounded-2xl" src={client.appLogo} />
         ) : undefined}
         <h1
           className={classNames(
-            "text-6xl font-bold",
+            "text-3xl sm:text-6xl font-bold",
             client.appLogo ? "mt-10" : "mt-48"
           )}
         >
