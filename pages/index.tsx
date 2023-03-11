@@ -1,7 +1,7 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
-import { Space_Grotesk } from "next/font/google";
+import { Preahvihear, Space_Grotesk } from "next/font/google";
 import classNames from "classnames";
 import BackgroundGradient from "../components/background-gradient";
 import Card from "../components/card";
@@ -117,12 +117,12 @@ const Home: NextPage = () => {
 
         {result !== undefined ? (
           <Card
-            className="overflow-hidden break-words text-start w-full p-4 max-w-lg bg-blue-100/20"
+            className="overflow-hidden break-words text-start w-full max-w-lg bg-blue-100/20"
             style={{
               minHeight: "9rem",
             }}
           >
-            {result}
+            <pre className="p-4 whitespace-pre-wrap">{result}</pre>
           </Card>
         ) : undefined}
       </main>
