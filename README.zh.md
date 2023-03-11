@@ -6,6 +6,8 @@ OhMyGPT 是一个项目，它使您能够在几分钟内部署基于 ChatGPT 的
 
 要部署基于 ChatGPT 的 Web 应用程序，您将需要来自 [OpenAI](https://platform.openai.com/account/api-keys) 的 API 密钥和一个[Vercel](https://vercel.com)帐户。我们计划将来扩大我们的支持范围，包括更多的云平台。但是目前，它只在 Vercel 上进行了测试。
 
+![Screenshot](screenshot.png)
+
 ## 开始
 
 1. 将此 repo fork 到您自己的 GitHub 账户中。
