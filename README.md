@@ -6,7 +6,7 @@ OhMyGPT is a project that enables you to deploy a ChatGPT-based web app within m
 
 To deploy your web app based on ChatGPT, you will require an API key from [OpenAI](https://platform.openai.com/account/api-keys) and an account in [Vercel](https://vercel.com). We plan to expand our support to include more cloud platforms in the future. However, currently, it has only been tested on Vercel.
 
-## Get Start
+## Get Started
 
 1. Fork this repository to your own GitHub account.
 2. Log in to your [Vercel](https://vercel.com) console to create a new project from the forked repository. ( ℹ️ Don't click the Deploy button at this moment)
@@ -25,7 +25,7 @@ You can customize your application by using environment variables. Here are all 
 APP_LOGO="https://avatars.githubusercontent.com/u/38027416?v=4"
 # The name of the app.
 APP_NAME="Oh My Polisher"
-# Summary your app's behavoir and show the users how to user it.
+# Summary your app's behavoir and show the users how to use it.
 APP_SUMMARY="Correcting and polishing your text."
 # Example input that shows user how to use the app.
 EXAMPLE_INPUT="Hello there, im Nooc, it's glad to see you."
